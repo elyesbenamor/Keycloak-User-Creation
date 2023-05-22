@@ -1,0 +1,49 @@
+---
+# GET ID for role in client
+#
+# vars:
+#   keycloak_role_name
+#   keycloak_client_name (dependency of keycloak-client-manage)
+
+- name: Fail if not role provided
+  ansible.builtin.fail:
+    msg: "keycloak_role_name is required to run keycloak-role-manage"
+  when: role is not defined
+
+- name: Fail if not keycloak_client_name provided
+  ansible.builtin.fail:
+    msg: "client_name is required to run keycloak-role-manage"
+  when: gec_ocsre.keycloak.client_name is not defined
+
+- name: Get client ID
+  ansible.builtin.include_role:
+    name: keycloak-client-manage
+
+- name: Check for role {{ role }} in {{ gec_ocsre.keycloak.realm }} realm
+  ansible.builtin.include_role:
+    name: keycloak-api-get
+  vars:
+    url_path: "/admin/realms/{{ gec_ocsre.keycloak.realm  }}/clients/{{ keycloak_client_id }}/roles/{{ role }}"
+    status_code: 200,404
+  tags: print_action
+
+- name: Check for valid reply
+  ansible.builtin.fail:
+    msg: "Cannot find role {{ role }} for client {{ gec_ocsre.keycloak.client_name }} in realm {{ gec_ocsre.keycloak.realm  }}"
+  when: gec_ocsre.keycloak_get_reply.status == 404
+
+- name: Retrieve keycloak_role_id
+  ansible.builtin.set_fact:
+    keycloak_role_id: "{{ gec_ocsre.keycloak_get_reply.json.id }}"
+
+
+- name: Add role {{ role }} to user {{ users.name }} in {{ gec_ocsre.keycloak.realm }} realm
+  ansible.builtin.include_role:
+    name: keycloak-api-post
+  vars:
+    url_path: "{{ user_location }}/role-mappings/clients/{{ keycloak_client_id }}"
+    body: [{
+      "id": "{{ keycloak_role_id }}",
+      "name": "{{ role }}", }]
+    status_code: 204
+  tags: print_action

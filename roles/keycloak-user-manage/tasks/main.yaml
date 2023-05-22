@@ -1,0 +1,35 @@
+---
+# Manages a user within a Keycloak realm
+#
+# vars:
+#   keycloak_user_provision  [optional,  default true]
+
+- name: Set defaults
+  ansible.builtin.set_fact:
+    keycloak_user_provision: "{{ keycloak_user_provision | default(true) }}"
+    keycloak_users_created: {}
+
+
+- name: Provision/fetch {{ keycloak.realm }}
+  ansible.builtin.include_role:
+    name: keycloak-token-provision
+  when: not 'token' in gec_ocsre.keycloak
+
+- name: Check user
+  ansible.builtin.include_tasks: check-users.yaml
+  loop: "{{ gec_ocsre.keycloak.users }}"
+  loop_control:
+    loop_var: users
+    label: "{{ users.name }}"
+
+- name: User provision
+  when: get_user.json | length == 0
+  block:
+
+    - name: Create user
+      ansible.builtin.include_tasks: create.yaml
+      loop: "{{ gec_ocsre.keycloak.users }}"
+      loop_control:
+        loop_var: users
+        label: "{{ users.name }}"
+

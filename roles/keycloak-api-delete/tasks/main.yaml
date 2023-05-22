@@ -1,0 +1,15 @@
+---
+# Performs a DELETE call to Keycloak API
+#
+# vars:
+#   url_path
+
+- name: Keycloak API DELETE
+  ansible.builtin.uri:
+    url: "{{ gec_ocsre.keycloak.base_url }}{{ url_path }}"
+    validate_certs: "no"
+    headers:
+      Authorization: "bearer {{ gec_ocsre.keycloak.token }}"
+    status_code: 204
+    method: DELETE
+  changed_when: true

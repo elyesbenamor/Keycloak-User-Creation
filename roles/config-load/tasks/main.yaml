@@ -1,0 +1,59 @@
+---
+# Looks up whole config/credentials for instance_config_name and initiates gec_ocsre
+#
+# vars:
+#   instance_config_name
+
+- name: Load config for instance {{ instance_config_name }}
+  ansible.builtin.debug:
+    msg: ""
+  tags: print_action
+
+# Get initial instance_name and initial instance_application value from instance_config_name string
+
+- name: Get initial instance_application, instance_environment, instance_name
+  ansible.builtin.set_fact:
+    instance_name: "{{ instance_config_name | regex_replace('^.*\\..*\\.(.*)$', '\\1') }}"
+    base_instance_name: "{{ instance_config_name | regex_replace('^.*\\..*\\.(.*)$', '\\1') }}"
+
+- name: Initialize gec_ocsre
+  ansible.builtin.set_fact:
+    gec_ocsre: {
+      'instance_name': "{{ instance_name }}",
+      'base_instance_name': "{{ base_instance_name }}"
+    }
+
+# Basic sanity checks on directories
+- name: Fail if missing base config dir
+  ansible.builtin.fail:
+    msg: "config_dir not defined, check your host_vars/localhost.yaml"
+  when: config_dir is not defined
+
+
+# Load initial config from instance
+
+- name: Set instance config filename
+  ansible.builtin.set_fact:
+    instance_config_fullpath: "{{ config_dir }}/{{ config_subdir_instance }}/{{ instance_config_name }}.yaml"
+
+- name: Check if {{ instance_config_fullpath }} does exist
+  ansible.builtin.stat:
+    path: "{{ instance_config_fullpath }}"
+  register: file
+
+- name: Fail if missing instance config file
+  ansible.builtin.fail:
+    msg: "Could not find {{ instance_config_fullpath }}, please check if instance config name '{{ instance_config_name }}' is correct"
+  when: not file.stat.exists
+
+- name: Loading {{ instance_config_fullpath }}
+  ansible.builtin.include_vars: "{{ instance_config_fullpath }}"
+
+
+- name: (Re)Load config/credentials from general to detailed
+  ansible.builtin.include_role:
+    name: config-load-config-file
+  vars:
+    filename: "{{ item }}"
+  with_items:
+    - "{{ config_dir }}/{{ config_subdir_instance }}/{{ instance_config_name }}.yaml"

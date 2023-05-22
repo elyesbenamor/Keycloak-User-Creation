@@ -1,0 +1,19 @@
+---
+keycloak:
+  base_url: xxxxxx
+  password_length: 20
+  client_name: xxxxx
+  realm: master
+  users: 
+    - name: user1
+      email: user1@gec.io
+      first_name: user1
+      role_names: 
+        - U-ADMIN
+        - U-AD
+    - name: user2
+      email: user2@gec.io
+      first_name: user2
+      role_names: 
+        - U-ADMIN
+        - U-AD

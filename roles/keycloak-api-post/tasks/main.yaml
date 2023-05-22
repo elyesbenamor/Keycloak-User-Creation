@@ -1,0 +1,49 @@
+---
+# Performs a POST call to Keycloak API
+#
+# vars:
+#   url_path
+#   body
+#   body_format  [optional, default is "json"]
+#   headers  [optional, default is
+#               {
+#                 Accept: "application/json"
+#                 Authorization: "bearer {{ gec_ocsre.keycloak.token }}"
+#                 Content-Type: "application/json"
+#               }
+#            ]
+#   status_code  [optional, default is 201]
+
+- name: Check for provided headers
+  ansible.builtin.set_fact:
+    got_non_default_headers: "{{ (headers is defined) and (headers | string != '') }}"
+
+- name: Set current headers (from provided headers)
+  ansible.builtin.set_fact:
+    current_headers: "{{ headers }}"
+    headers: ""
+  when: got_non_default_headers|bool
+
+- name: Set current headers (from default)
+  ansible.builtin.set_fact:
+    current_headers:
+      Accept: "application/json"
+      Authorization: "bearer {{ gec_ocsre.keycloak.token }}"
+      Content-Type: "application/json"
+  when: not (got_non_default_headers|bool)
+
+- name: Keycloak API POST
+  ansible.builtin.uri:
+    url: "{{ gec_ocsre.keycloak.base_url }}{{ url_path }}"
+    validate_certs: "no"
+    headers: "{{ current_headers }}"
+    body_format: "{{ body_format | default('json') }}"
+    body: "{{ body }}"
+    status_code: "{{ status_code | default(201) }}"
+    method: POST
+  register: reply
+  changed_when: true
+
+- name: Set/update keycloak_post_reply in gec_ocsre
+  ansible.builtin.set_fact:
+    gec_ocsre: "{{ gec_ocsre | combine({'keycloak_post_reply': reply}) }}"

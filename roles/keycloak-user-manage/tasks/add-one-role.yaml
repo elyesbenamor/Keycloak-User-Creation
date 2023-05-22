@@ -1,0 +1,13 @@
+---
+- name: Detect role
+  ansible.builtin.include_role:
+    name: keycloak-role-manage
+  loop: "{{ users.role_names }}"
+  loop_control:
+    loop_var: role
+    label: "{{ users.role_names }}"
+  when:
+    - (users.role_names is defined) and (users.role_names | length > 0)
+    - gec_ocsre.keycloak.client_name is defined
+
+

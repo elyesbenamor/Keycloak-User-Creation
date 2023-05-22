@@ -1,0 +1,17 @@
+---
+- name: Check for user {{ users.name }} in {{ gec_ocsre.keycloak.realm }} realm
+  ansible.builtin.include_role:
+    name: keycloak-api-get
+  vars:
+    url_path: "/admin/realms/{{ gec_ocsre.keycloak.realm }}/users?username={{ users.name }}"
+    status_code: 200,404
+  tags: print_action
+
+- name: Check for valid reply
+  ansible.builtin.fail:
+    msg: "Cannot find Keycloak realm {{ gec_ocsre.keycloak.realm }}"
+  when: gec_ocsre.keycloak_get_reply.status == 404
+
+- name: Set get_user for existing user
+  ansible.builtin.set_fact:
+    get_user: "{{ gec_ocsre.keycloak_get_reply }}"

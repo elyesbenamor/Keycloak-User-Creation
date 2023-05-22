@@ -1,0 +1,17 @@
+---
+- name: Check for client {{ gec_ocsre.keycloak.client_name }} in {{ gec_ocsre.keycloak.realm }} realm
+  ansible.builtin.include_role:
+    name: keycloak-api-get
+  vars:
+    url_path: "/admin/realms/{{ gec_ocsre.keycloak.realm }}/clients?clientId={{ gec_ocsre.keycloak.client_name }}"
+  tags: print_action
+
+- name: Fail if client cannot be found
+  ansible.builtin.fail:
+    msg: "Cannot find client {{ gec_ocsre.keycloak.client_name }} in Keycloak realm {{ gec_ocsre.keycloak.realm }}"
+  when: gec_ocsre.keycloak_get_reply.json | length == 0
+
+- name: Retrieve client_id
+  ansible.builtin.set_fact:
+    keycloak_client_id: "{{ gec_ocsre.keycloak_get_reply.json[0].id }}"
+  when: gec_ocsre.keycloak_get_reply.json | length > 0

@@ -1,0 +1,30 @@
+---
+# Get Keycloak token
+- name: Get keycloak master token
+  ansible.builtin.include_role:
+    name: keycloak-api-post
+  vars:
+    url_path: "/realms/master/protocol/openid-connect/token"
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+    body_format: form-urlencoded
+    body:
+      client_id: "admin-cli"
+      username: "admin"
+      password: "admin"
+      grant_type: "password"
+    status_code: 200
+  tags: print_action
+
+- name: Fetch keycloak dict from gec_ocsre
+  ansible.builtin.set_fact:
+    new_keycloak: "{{ gec_ocsre.keycloak }}"
+
+- name: Set token in new keycloak dict
+  ansible.builtin.set_fact:
+    new_keycloak: "{{ new_keycloak | combine({'token': gec_ocsre.keycloak_post_reply.json.access_token}) }}"
+
+- name: Set/update keycloak data in gec_ocsre
+  ansible.builtin.set_fact:
+    gec_ocsre: "{{ gec_ocsre | combine({'keycloak': new_keycloak}) }}"
+

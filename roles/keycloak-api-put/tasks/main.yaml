@@ -1,0 +1,21 @@
+---
+# Performs a PUT call to Keycloak API
+#
+# vars:
+#   url_path
+#   body
+#   status_code  [optional, default is 200]
+
+- name: Keycloak API PUT
+  ansible.builtin.uri:
+    url: "{{ gec_ocsre.keycloak.base_url }}{{ url_path }}"
+    validate_certs: "no"
+    headers:
+      Accept: "application/json"
+      Authorization: "bearer {{ gec_ocsre.keycloak.token }}"
+      Content-Type: "application/json"
+    body_format: json
+    body: "{{ body }}"
+    method: PUT
+    status_code: "{{ status_code | default(200) }}"
+  changed_when: true

@@ -1,0 +1,27 @@
+---
+- name: Create user {{ users.name }} in {{ gec_ocsre.keycloak.realm }} realm
+  ansible.builtin.include_role:
+    name: keycloak-api-post
+  vars:
+    url_path: "/admin/realms/{{ gec_ocsre.keycloak.realm }}/users"
+    body:
+      username: "{{ users.name }}"
+      email: "{{ users.email | default('') }}"
+      emailVerified: "{{ users.email != '' }}"
+      enabled: true
+      firstName: "{{ users.first_name | default('') }}"
+  tags: print_action
+
+- name: Set user_location for newly created user
+  ansible.builtin.set_fact:
+    user_location: "{{ gec_ocsre.keycloak_post_reply.location[gec_ocsre.keycloak.base_url | length :] }}"
+
+- name: Add location to new dict
+  set_fact:
+    keycloak_users_created: "{{ keycloak_users_created | combine ({ 'location' : user_location })}}"
+
+- name: Set password
+  ansible.builtin.include_tasks: set-password.yaml
+
+- name: Add roles
+  ansible.builtin.include_tasks: add-one-role.yaml

@@ -1,0 +1,20 @@
+---
+
+- name: Provision user in Keycloak
+  hosts: localhost
+  gather_facts: false
+  pre_tasks:
+    - name: Insert instance config name from input
+      pause:
+        prompt: "Please specify the instance config name"
+      register: input
+      when: instance_config_name is not defined
+    - name: Set instance config name
+      ansible.builtin.set_fact:
+        instance_config_name: "{{ input.user_input }}"
+      when: instance_config_name is not defined
+
+  roles:
+    - { role: config-load }
+    - { role: keycloak-user-manage }
+

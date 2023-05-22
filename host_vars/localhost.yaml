@@ -1,0 +1,5 @@
+---
+
+config_dir: "config"
+config_subdir_instance: "edge"
+

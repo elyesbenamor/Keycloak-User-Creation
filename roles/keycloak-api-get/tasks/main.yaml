@@ -1,0 +1,23 @@
+---
+# Performs a GET call to Keycloak API
+#
+# vars:
+#   url_path
+#   status_code  [optional, default is 200]
+
+
+- name: Keycloak API GET
+  ansible.builtin.uri:
+    url: "{{ gec_ocsre.keycloak.base_url }}{{ url_path }}"
+    validate_certs: "no"
+    headers:
+      Accept: "application/json"
+      Authorization: "bearer {{ gec_ocsre.keycloak.token }}"
+      Content-Type: "application/json"
+    method: GET
+    status_code: "{{ status_code | default(200) }}"
+  register: reply
+
+- name: Set/update keycloak_get_reply in gec_ocsre
+  ansible.builtin.set_fact:
+    gec_ocsre: "{{ gec_ocsre | combine({'keycloak_get_reply': reply}) }}"

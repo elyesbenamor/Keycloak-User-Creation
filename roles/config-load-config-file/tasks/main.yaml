@@ -1,0 +1,26 @@
+---
+
+- name: Check if {{ filename }} does exist
+  ansible.builtin.stat:
+    path: "{{ filename }}"
+  register: file
+
+- name: Load template
+  when: file.stat.exists
+  block:
+
+    - name: Load {{ filename }}
+      ansible.builtin.include_vars: "{{ filename }}"
+      register: included
+
+    - name: Load template
+      ansible.builtin.set_fact:
+        new_data: "{{ lookup('template', 'new_data.j2') | from_yaml }}"
+    
+    - name: Add loaded values to gec_ocsre
+      ansible.builtin.set_fact:
+        gec_ocsre: "{{ gec_ocsre | combine(new_data) }}"
+
+- name: Reset "consumed" load_config_file_under_key
+  ansible.builtin.set_fact:
+    load_config_file_under_key: ""
